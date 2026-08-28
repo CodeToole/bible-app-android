@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="LumenScriptura.csproj" />
-  <Project Path="LumenScriptura.Shared/LumenScriptura.Shared.csproj" />
-  <Project Path="LumenScriptura.Web/LumenScriptura.Web.csproj" />
-</Solution>
