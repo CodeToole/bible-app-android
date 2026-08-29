@@ -29,6 +29,13 @@ class NoteParserService(private val bibleService: IBibleService) {
             RegexOption.IGNORE_CASE
         )
 
+        private val SingleChapterReferenceRegex = Regex(
+            "^((?:[1-3]\\s*)?[A-Za-z]+(?:\\s+[A-Za-z]+)*)\\s+(\\d+[0-9\\s,\\-–—−;:]*)$",
+            RegexOption.IGNORE_CASE
+        )
+
+        private val SingleChapterBooks = setOf("Obadiah", "Philemon", "2 John", "3 John", "Jude")
+
         private val RangeRegex = Regex("(\\d+)(?:\\s*[-–—−]\\s*(\\d+))?")
 
         private val ParentheticalRegex = Regex("\\([^)]*\\)")
@@ -164,14 +171,35 @@ class NoteParserService(private val bibleService: IBibleService) {
                 if (trimmed.isEmpty()) continue
 
                 val refCandidate = stripLeadingItemNumber(trimmed)
-                val match = ReferenceRegex.find(refCandidate)
+                var match = ReferenceRegex.find(refCandidate)
+                var isSingleChapterImplicit = false
+                
+                if (match == null) {
+                    val scMatch = SingleChapterReferenceRegex.find(refCandidate)
+                    if (scMatch != null) {
+                        val rawBookName = scMatch.groups[1]?.value?.trim() ?: ""
+                        val resolvedCanon = resolveCanonicalBookName(rawBookName)
+                        if (SingleChapterBooks.contains(resolvedCanon)) {
+                            match = scMatch
+                            isSingleChapterImplicit = true
+                        }
+                    }
+                }
+
                 if (match != null) {
                     val rawBookName = match.groups[1]?.value?.trim() ?: ""
                     val resolvedCanon = resolveCanonicalBookName(rawBookName)
                     val book = bibleService.getBookByName(resolvedCanon) ?: bibleService.getBookByName(rawBookName)
                     val bookName = book?.longName ?: resolvedCanon
 
-                    val chapterSegments = parseChapterSegments(match.groups[2]?.value ?: "")
+                    val chapterSegments = if (isSingleChapterImplicit) {
+                        val versePayload = match.groups[2]?.value ?: ""
+                        val ranges = parseVerseRanges(versePayload)
+                        if (ranges.isNotEmpty()) listOf(ChapterSegment(1, ranges)) else emptyList()
+                    } else {
+                        parseChapterSegments(match.groups[2]?.value ?: "")
+                    }
+
                     if (chapterSegments.isNotEmpty()) {
                         var anyAdded = false
                         for (segment in chapterSegments) {

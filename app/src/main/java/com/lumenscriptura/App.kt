@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,8 +25,8 @@ import androidx.compose.ui.unit.sp
 import com.lumenscriptura.ui.theme.*
 import kotlinx.coroutines.launch
 
-enum class Screen {
-    Scripture, Highlights, StudyNotes, History
+enum class Tab {
+    SCRIPTURE, HIGHLIGHTS, STUDY_NOTES, HISTORY
 }
 
 @Composable
@@ -76,19 +77,24 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
-    var currentScreen by remember { mutableStateOf(Screen.Scripture) }
-    var selectedBook by remember { mutableStateOf(books.firstOrNull() ?: Book(10, "GEN", "Genesis", 50)) }
-    var selectedChapter by remember { mutableIntStateOf(1) }
-    var targetScrollVerse by remember { mutableStateOf<Int?>(null) }
-    var showSearch by remember { mutableStateOf(false) }
+    var activeTab by rememberSaveable { mutableStateOf(Tab.SCRIPTURE) }
+    var currentBook by rememberSaveable { mutableStateOf(books.firstOrNull()?.longName ?: "Genesis") }
+    var currentChapter by rememberSaveable { mutableIntStateOf(1) }
+    var targetScrollVerse by rememberSaveable { mutableStateOf<Int?>(null) }
+    var showSearch by rememberSaveable { mutableStateOf(false) }
+    val savedNotes = remember { mutableStateListOf<SavedStudyNote>() }
+
+    val selectedBook = remember(currentBook) {
+        books.find { it.longName == currentBook } ?: books.firstOrNull() ?: Book(10, "GEN", "Genesis", 50)
+    }
 
     fun navigateToScripture(bookName: String, chapter: Int, verseNumber: Int? = null) {
         val book = books.find { it.longName.equals(bookName, ignoreCase = true) || it.shortName.equals(bookName, ignoreCase = true) }
         if (book != null) {
-            selectedBook = book
-            selectedChapter = chapter
+            currentBook = book.longName
+            currentChapter = chapter
             targetScrollVerse = verseNumber
-            currentScreen = Screen.Scripture
+            activeTab = Tab.SCRIPTURE
         }
     }
 
@@ -103,16 +109,16 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
                     books = books,
                     selectedBook = selectedBook,
                     onBookSelected = { book ->
-                        selectedBook = book
-                        selectedChapter = 1
+                        currentBook = book.longName
+                        currentChapter = 1
                         targetScrollVerse = null
-                        currentScreen = Screen.Scripture
+                        activeTab = Tab.SCRIPTURE
                         coroutineScope.launch { drawerState.close() }
                     },
                     onChapterSelected = { chapter ->
-                        selectedChapter = chapter
+                        currentChapter = chapter
                         targetScrollVerse = null
-                        currentScreen = Screen.Scripture
+                        activeTab = Tab.SCRIPTURE
                         coroutineScope.launch { drawerState.close() }
                     }
                 )
@@ -126,14 +132,14 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
                         title = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
-                                    if (selectedChapter > 1) {
-                                        selectedChapter--
+                                    if (currentChapter > 1) {
+                                        currentChapter--
                                         targetScrollVerse = null
                                     } else {
                                         val prevBookIndex = books.indexOf(selectedBook) - 1
                                         if (prevBookIndex >= 0) {
-                                            selectedBook = books[prevBookIndex]
-                                            selectedChapter = selectedBook.totalChapters
+                                            currentBook = books[prevBookIndex].longName
+                                            currentChapter = books[prevBookIndex].totalChapters
                                             targetScrollVerse = null
                                         }
                                     }
@@ -141,19 +147,19 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
                                     Icon(Icons.Default.ChevronLeft, contentDescription = "Previous")
                                 }
                                 Text(
-                                    text = "${selectedBook.longName.uppercase()} $selectedChapter",
+                                    text = "${selectedBook.longName.uppercase()} $currentChapter",
                                     style = MaterialTheme.typography.titleMedium,
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 )
                                 IconButton(onClick = {
-                                    if (selectedChapter < selectedBook.totalChapters) {
-                                        selectedChapter++
+                                    if (currentChapter < selectedBook.totalChapters) {
+                                        currentChapter++
                                         targetScrollVerse = null
                                     } else {
                                         val nextBookIndex = books.indexOf(selectedBook) + 1
                                         if (nextBookIndex < books.size) {
-                                            selectedBook = books[nextBookIndex]
-                                            selectedChapter = 1
+                                            currentBook = books[nextBookIndex].longName
+                                            currentChapter = 1
                                             targetScrollVerse = null
                                         }
                                     }
@@ -187,18 +193,18 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
                         )
                     )
                     ScrollableTabRow(
-                        selectedTabIndex = currentScreen.ordinal,
+                        selectedTabIndex = activeTab.ordinal,
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.primary,
                         edgePadding = 16.dp,
                         divider = {}
                     ) {
-                        Screen.entries.forEach { screen ->
+                        Tab.entries.forEach { screen ->
                             Tab(
-                                selected = currentScreen == screen,
+                                selected = activeTab == screen,
                                 onClick = { 
-                                    currentScreen = screen 
-                                    if (screen != Screen.Scripture) targetScrollVerse = null
+                                    activeTab = screen 
+                                    if (screen != Tab.SCRIPTURE) targetScrollVerse = null
                                 },
                                 text = { Text(screen.name.uppercase(), fontSize = 12.sp) }
                             )
@@ -214,14 +220,14 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                         label = { Text("Home") },
-                        selected = currentScreen == Screen.Scripture,
-                        onClick = { currentScreen = Screen.Scripture }
+                        selected = activeTab == Tab.SCRIPTURE,
+                        onClick = { activeTab = Tab.SCRIPTURE }
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Bookmark, contentDescription = "Bookmarks") },
                         label = { Text("Bookmarks") },
-                        selected = currentScreen == Screen.Highlights,
-                        onClick = { currentScreen = Screen.Highlights }
+                        selected = activeTab == Tab.HIGHLIGHTS,
+                        onClick = { activeTab = Tab.HIGHLIGHTS }
                     )
                     NavigationBarItem(
                         icon = {
@@ -237,42 +243,51 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
                         label = { Text("Quick Add") },
                         selected = false,
                         onClick = { 
-                            currentScreen = Screen.StudyNotes
+                            activeTab = Tab.STUDY_NOTES
                             targetScrollVerse = null
                         }
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.NoteAlt, contentDescription = "Notes") },
                         label = { Text("Notes") },
-                        selected = currentScreen == Screen.StudyNotes,
-                        onClick = { currentScreen = Screen.StudyNotes }
+                        selected = activeTab == Tab.STUDY_NOTES,
+                        onClick = { activeTab = Tab.STUDY_NOTES }
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.History, contentDescription = "History") },
                         label = { Text("History") },
-                        selected = currentScreen == Screen.History,
-                        onClick = { currentScreen = Screen.History }
+                        selected = activeTab == Tab.HISTORY,
+                        onClick = { activeTab = Tab.HISTORY }
                     )
                 }
             }
         ) { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
-                when (currentScreen) {
-                    Screen.Scripture -> ScriptureReader(bibleService, selectedBook, selectedChapter, targetScrollVerse, onScrollComplete = { targetScrollVerse = null })
-                    Screen.StudyNotes -> NotesParserScreen(bibleService)
-                    Screen.Highlights -> HighlightsScreen(bibleService, onHighlightClick = { h -> navigateToScripture(h.bookName, h.chapter, h.verseNum) })
-                    Screen.History -> HistoryScreen(bibleService, onHistoryClick = { item -> navigateToScripture(item.bookName, item.chapter) })
+                when (activeTab) {
+                    Tab.SCRIPTURE -> ScriptureReader(bibleService, selectedBook, currentChapter, targetScrollVerse, onScrollComplete = { targetScrollVerse = null })
+                    Tab.STUDY_NOTES -> StudyNotesScreen(
+                        bibleService = bibleService,
+                        savedNotes = savedNotes,
+                        onSaveNote = { input, blocks ->
+                            savedNotes.add(0, SavedStudyNote(inputReference = input, blocks = blocks))
+                        },
+                        onDeleteNote = { note ->
+                            savedNotes.remove(note)
+                        }
+                    )
+                    Tab.HIGHLIGHTS -> HighlightsScreen(bibleService, onHighlightClick = { h -> navigateToScripture(h.bookName, h.chapter, h.verseNum) })
+                    Tab.HISTORY -> HistoryScreen(bibleService, onHistoryClick = { item -> navigateToScripture(item.bookName, item.chapter) })
                 }
             }
             
             if (showSearch) {
                 SmartSearchModal(
                     bibleService = bibleService,
-                    onResultClick = { book, chapter ->
-                        selectedBook = book
-                        selectedChapter = chapter
-                        targetScrollVerse = null
-                        currentScreen = Screen.Scripture
+                    onResultClick = { book, chapter, verse ->
+                        currentBook = book.longName
+                        currentChapter = chapter
+                        targetScrollVerse = verse
+                        activeTab = Tab.SCRIPTURE
                         showSearch = false
                     },
                     onDismiss = { showSearch = false }
@@ -408,98 +423,6 @@ fun BookItem(
                     ) {
                         Text(chapter.toString(), fontSize = 12.sp)
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun NotesParserScreen(bibleService: BibleService) {
-    val noteParserService = remember { NoteParserService(bibleService) }
-    var referenceInput by remember { mutableStateOf("1 KINGS 8:27-30 41-44, 46-53") }
-    var blocks by remember { mutableStateOf<List<ScripturePassageBlock>>(emptyList()) }
-    var isExpanded by remember { mutableStateOf(true) }
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(modifier = Modifier.padding(if (isExpanded) 16.dp else 8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = if (isExpanded) "Study Notes Input" else "Notes: ${referenceInput.take(20)}...",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = GoldText,
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(onClick = { isExpanded = !isExpanded }) {
-                        Icon(if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null)
-                    }
-                }
-                
-                if (isExpanded) {
-                    OutlinedTextField(
-                        value = referenceInput,
-                        onValueChange = { referenceInput = it },
-                        label = { Text("Scripture Reference / Study Notes", color = GoldText) },
-                        minLines = 3,
-                        maxLines = 8,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = GoldAccent,
-                            unfocusedBorderColor = Color.Gray,
-                            focusedLabelColor = GoldAccent
-                        )
-                    )
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                blocks = noteParserService.parseAndExpand(referenceInput)
-                                isExpanded = false
-                            }
-                        },
-                        modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = Color.Black)
-                    ) {
-                        Text("PARSE")
-                    }
-                }
-            }
-        }
-
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-            items(blocks) { block ->
-                if (block.isScripture) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = block.referenceHeader,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = GoldText
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            block.verses.forEach { verse ->
-                                Text(
-                                    text = "${verse.verseNum} ${verse.text}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    Text(
-                        text = block.plainText,
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LightGray
-                    )
                 }
             }
         }

@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SmartSearchModal(
     bibleService: IBibleService,
-    onResultClick: (Book, Int) -> Unit,
+    onResultClick: (Book, Int, Int?) -> Unit,
     onDismiss: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -46,7 +46,47 @@ fun SmartSearchModal(
                 onValueChange = { 
                     searchQuery = it
                     scope.launch {
-                        results = bibleService.search(it)
+                        val trimmed = it.trim()
+                        if (trimmed.length < 2) {
+                            results = emptyList()
+                            return@launch
+                        }
+
+                        val customResults = mutableListOf<Verse>()
+
+                        // 1. Book-only lookup (e.g. "Obadiah" -> Obadiah 1)
+                        val canonicalBook = BibleBookAliases.getCanonicalName(trimmed)
+                        if (canonicalBook != null) {
+                            val book = bibleService.getBookByName(canonicalBook)
+                            if (book != null) {
+                                val firstChapterVerses = bibleService.getChapterVerses(book.longName, 1)
+                                if (firstChapterVerses.isNotEmpty()) {
+                                    customResults.add(firstChapterVerses.first().copy(text = "[Chapter 1] " + firstChapterVerses.first().text))
+                                }
+                            }
+                        }
+
+                        // 2. Single-chapter reference lookup (e.g. "Obadiah 15")
+                        val singleChapterBooks = listOf("Obadiah", "Philemon", "2 John", "3 John", "Jude")
+                        val parts = trimmed.split("\\s+".toRegex())
+                        if (parts.size >= 2) {
+                            val verseStr = parts.last()
+                            val bookPart = trimmed.substring(0, trimmed.length - verseStr.length).trim()
+                            val possibleVerse = verseStr.toIntOrNull()
+                            if (possibleVerse != null) {
+                                val canon = BibleBookAliases.getCanonicalName(bookPart)
+                                if (canon != null && singleChapterBooks.contains(canon)) {
+                                    val verses = bibleService.getChapterVerses(canon, 1)
+                                    val targetVerse = verses.find { it.verseNum == possibleVerse }
+                                    if (targetVerse != null) {
+                                        customResults.add(targetVerse)
+                                    }
+                                }
+                            }
+                        }
+
+                        val searchResults = bibleService.search(trimmed)
+                        results = (customResults + searchResults).distinctBy { "${it.bookName}:${it.chapter}:${it.verseNum}" }.take(50)
                     }
                 },
                 placeholder = { Text("Search keywords or references...") },
@@ -68,7 +108,7 @@ fun SmartSearchModal(
                                 scope.launch {
                                     val book = bibleService.getBookByName(verse.bookName ?: "")
                                     if (book != null) {
-                                        onResultClick(book, verse.chapter)
+                                        onResultClick(book, verse.chapter, verse.verseNum)
                                     }
                                 }
                             }

@@ -52,3 +52,11 @@ data class HistoryItem(
     val chapter: Int,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+@Serializable
+data class SavedStudyNote(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val inputReference: String,
+    val blocks: List<ScripturePassageBlock>,
+    val timestamp: Long = System.currentTimeMillis()
+)

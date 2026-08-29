@@ -34,7 +34,7 @@ object BibleBookAliases {
         register("Hosea", "HOS", "HOSEA")
         register("Joel", "JOEL", "JL")
         register("Amos", "AMOS", "AM")
-        register("Obadiah", "OBAD", "OBADIAH", "OB")
+        register("Obadiah", "OBAD", "OBADIAH", "OBA", "OB")
         register("Jonah", "JONAH", "JON")
         register("Micah", "MIC", "MICAH")
         register("Nahum", "NAH", "NAHUM")
@@ -68,7 +68,7 @@ object BibleBookAliases {
         register("1 John", "1 JN", "1JN", "1 JOHN", "1JOHN", "1 JHN", "1JHN", "1J")
         register("2 John", "2 JN", "2JN", "2 JOHN", "2JOHN", "2 JHN", "2JHN", "2J")
         register("3 John", "3 JN", "3JN", "3 JOHN", "3JOHN", "3 JHN", "3JHN", "3J")
-        register("Jude", "JUDE", "JUD", "JD")
+        register("Jude", "JUDE", "JUD", "JD", "J")
         register("Revelation", "REV", "REVELATION", "REVELATIONS", "APOCALYPSE", "RV")
     }
 
