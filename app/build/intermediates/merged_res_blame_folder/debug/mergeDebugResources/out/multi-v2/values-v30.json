@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.lumenscriptura.app-mergeDebugResources-57:/values-v30/values-v30.xml",
+            "outputFile": "com.lumenscriptura.app-mergeDebugResources-63:/values-v30/values-v30.xml",
             "map": [
                 {
                     "source": "C:\\Users\\waita\\.gradle\\caches\\9.7.1\\transforms\\17bd7e6a879226c2e56441634262a096\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",

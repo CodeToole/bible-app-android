@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+    <string msgid="5976598919945601918" name="abc_action_bar_home_description">"转到首页"</string>
+    <string msgid="8388173803310557296" name="abc_action_bar_up_description">"转到上一层级"</string>
+    <string msgid="3937310113216875497" name="abc_action_menu_overflow_description">"更多选项"</string>
+    <string msgid="4692188335987374352" name="abc_action_mode_done">"完成"</string>
+    <string msgid="1189761859438369441" name="abc_activity_chooser_view_see_all">"查看全部"</string>
+    <string msgid="2165779757652331008" name="abc_activitychooserview_choose_application">"选择应用"</string>
+    <string msgid="4215997306490295099" name="abc_capital_off">"关闭"</string>
+    <string msgid="884982626291842264" name="abc_capital_on">"开启"</string>
+    <string msgid="8833365367933412986" name="abc_menu_alt_shortcut_label">"Alt+"</string>
+    <string msgid="2223301931652355242" name="abc_menu_ctrl_shortcut_label">"Ctrl+"</string>
+    <string msgid="838001238306846836" name="abc_menu_delete_shortcut_label">"Delete 键"</string>
+    <string msgid="7986526966204849475" name="abc_menu_enter_shortcut_label">"Enter 键"</string>
+    <string msgid="375214403600139847" name="abc_menu_function_shortcut_label">"Fn+"</string>
+    <string msgid="4192209724446364286" name="abc_menu_meta_shortcut_label">"Meta+"</string>
+    <string msgid="4741552369836443843" name="abc_menu_shift_shortcut_label">"Shift+"</string>
+    <string msgid="5473865519181928982" name="abc_menu_space_shortcut_label">"空格键"</string>
+    <string msgid="6180552449598693998" name="abc_menu_sym_shortcut_label">"Sym+"</string>
+    <string msgid="5520303668377388990" name="abc_prepend_shortcut_label">"Menu+"</string>
+    <string msgid="7208076849092622260" name="abc_search_hint">"搜索…"</string>
+    <string msgid="3741173234950517107" name="abc_searchview_description_clear">"清除查询"</string>
+    <string msgid="693312494995508443" name="abc_searchview_description_query">"搜索查询"</string>
+    <string msgid="3417662926640357176" name="abc_searchview_description_search">"搜索"</string>
+    <string msgid="1486535517437947103" name="abc_searchview_description_submit">"提交查询"</string>
+    <string msgid="2293578557972875415" name="abc_searchview_description_voice">"语音搜索"</string>
+    <string msgid="8875138169939072951" name="abc_shareactionprovider_share_with">"分享对象"</string>
+    <string msgid="9055268688411532828" name="abc_shareactionprovider_share_with_application">"与<ns1:g id="APPLICATION_NAME">%s</ns1:g>分享"</string>
+    <string msgid="1656852541809559762" name="abc_toolbar_collapse_description">"收起"</string>
+    <string name="app_update_notification_channel_description" translation_description="Description of the notification channel for in-app updates">显示应用内更新进度</string>
+    <string name="app_update_notification_channel_name" translation_description="Name of the notification channel for in-app updates">应用更新</string>
+    <string name="back_button_description" translation_description="Description for image button (back) which aborts feedback">返回</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"接听"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"视频通话"</string>
     <string msgid="3229508546291798546" name="call_notification_decline_action">"拒接"</string>
@@ -27,11 +57,27 @@
     <string name="common_open_on_phone">在手机上打开</string>
     <string name="common_signin_button_text">登录</string>
     <string name="common_signin_button_text_long">使用 Google 账号登录</string>
+    <string msgid="3260749812566568062" name="copy_toast_msg">"链接已复制到剪贴板"</string>
     <string msgid="8038256446254964252" name="default_error_message">"输入无效"</string>
     <string msgid="6312721426453364202" name="default_popup_window_title">"弹出式窗口"</string>
+    <string name="download_completed" translation_description="Title of notification when download of update has completed">下载完成</string>
+    <string name="download_failed" translation_description="Title of notification when download of update has failed">下载失败</string>
+    <string name="downloading_app_update" translation_description="Title of the notification showing during download of update">正在下载应用内更新…</string>
     <string msgid="1890207353314751437" name="dropdown_menu">"下拉菜单"</string>
+    <string msgid="4566929209979330987" name="fallback_menu_item_copy_link">"复制链接"</string>
+    <string msgid="3413186855122069269" name="fallback_menu_item_open_in_browser">"在浏览器中打开"</string>
+    <string msgid="7145444925855055364" name="fallback_menu_item_share_link">"分享链接"</string>
+    <string name="feedback_launch_failed" translation_description="Toast explaining that launching the feedback functionality failed">启动反馈失败</string>
+    <string name="feedback_no_release" translation_description="Toast explaining that feedback would have been sent, but was not, since development mode was active">系统应当发送反馈，但由于处于开发模式而没有发送。</string>
+    <string name="feedback_notification_channel_description" translation_description="Description of the notification channel for in-app feedback">显示输入有关应用反馈的通知</string>
+    <string name="feedback_notification_channel_name" translation_description="Name of the notification channel for in-app feedback">反馈</string>
+    <string name="feedback_notification_text" translation_description="Text of notification encouraging testers to enter feedback for the app">点按以输入对 %1$s 的反馈</string>
+    <string name="feedback_notification_title" translation_description="Title of notification encouraging testers to enter feedback">我们期待您的反馈！</string>
+    <string name="feedback_text_hint" translation_description="Default text hint displayed in the text box where user should type their feedback">有反馈意见？请提供宝贵意见，帮助我们改善此应用的使用体验。</string>
+    <string name="feedback_unidentified_release" translation_description="Toast explaining feedback can&apos;t be provided, because release can&apos;t be found">未找到版本。App Distribution 可能尚未安装此应用，或者您可能无法继续使用此应用。</string>
     <string msgid="6827826412747255547" name="in_progress">"进行中"</string>
     <string msgid="7933458017204019916" name="indeterminate">"部分选中"</string>
+    <string name="install_failed" translation_description="Title of notification when installation of update has failed">安装失败</string>
     <string msgid="2988463736136100848" name="m3c_bottom_sheet_collapse_description">"收起底部动作条"</string>
     <string msgid="1555567894577437024" name="m3c_bottom_sheet_dismiss_description">"关闭底部动作条"</string>
     <string msgid="8403354765404029791" name="m3c_bottom_sheet_drag_handle_description">"拖动手柄"</string>
@@ -90,10 +136,21 @@
     <string msgid="1805687647081129904" name="m3c_tooltip_long_press_label">"显示提示"</string>
     <string msgid="5460405025248574620" name="m3c_tooltip_pane_description">"提示"</string>
     <string msgid="542007171693138492" name="navigation_menu">"导航菜单"</string>
+    <string name="no_screenshot" translation_description="Text displayed when there is no screenshot available to be included with the feedback">屏幕截图（不可用）</string>
     <string msgid="6610465462668679431" name="not_selected">"未选择"</string>
+    <string name="notifications_group_name" translation_description="Title of the notification channel group for the SDK">Firebase App Distribution</string>
     <string msgid="5941395253238309765" name="range_end">"范围终点"</string>
     <string msgid="7097486360902471446" name="range_start">"范围起点"</string>
+    <string name="screenshot" translation_description="Text displayed next to the checkbox which can be toggled to include/exclude a screenshot with the feedback">屏幕截图</string>
+    <string name="screenshot_image_description" translation_description="Description for the screenshot image">屏幕截图图片</string>
+    <string msgid="6264217191555673260" name="search_menu_title">"搜索"</string>
     <string msgid="6043586758067023" name="selected">"已选择"</string>
+    <string name="send_button_description" translation_description="Description of image button (send) which sends feedback">发送</string>
+    <string name="send_feedback" translation_description="Text next to send button which sends feedback">发送反馈</string>
+    <string name="signin_dialog_title" translation_description="Title of the dialog encouraging the user to enable Firebase App Distribution features">启用测试功能</string>
+    <string name="singin_dialog_message" translation_description="Content of the dialog encouraging the user to enable Firebase App Distribution features">启用新版本提醒和应用内反馈等测试功能。</string>
+    <string name="singin_no_button" translation_description="Text on button to decline Firebase App Distribution features">以后再说</string>
+    <string name="singin_yes_button" translation_description="Text on button to enable Firebase App Distribution features">启用</string>
     <string msgid="4139871816613051306" name="state_empty">"空白"</string>
     <string msgid="5834637030682409883" name="state_off">"已关闭"</string>
     <string msgid="1490883874751719580" name="state_on">"已开启"</string>
@@ -103,4 +160,12 @@
     <string msgid="5946805113151406391" name="template_percent">"百分之 <ns1:g id="PERCENTAGE">%1$d</ns1:g>。"</string>
     <string msgid="3765533235322692011" name="tooltip_description">"提示"</string>
     <string msgid="3124740595719787496" name="tooltip_label">"显示提示"</string>
+    <string name="unknown_sources_dialog_description" translation_description="Text of dialog describing why installation from unknown sources needs to be enabled">如需安装更新，请启用“从未知来源安装”</string>
+    <string name="unknown_sources_dialog_title" translation_description="Title of dialog describing that installation from unknown sources needs to be enabled">从未知来源安装</string>
+    <string name="unknown_sources_yes_button" translation_description="Label on button launching settings to enable installation from unknown sources">设置</string>
+    <string name="update_dialog_title" translation_description="Title of the dialog explaining to the user that a new version of the application is available">有新版本可用</string>
+    <string name="update_no_button" translation_description="Text on button to cancel update">取消</string>
+    <string name="update_release_notes" translation_description="Text prefixing release notes">版本说明：</string>
+    <string name="update_version_available" translation_description="Version string (and code) of the available update">版本 %1$s (%2$d) 可用。</string>
+    <string name="update_yes_button" translation_description="Text on button to start update">更新</string>
 </resources>

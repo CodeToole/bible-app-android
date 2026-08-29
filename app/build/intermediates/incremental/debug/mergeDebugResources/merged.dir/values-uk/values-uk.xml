@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+    <string msgid="5976598919945601918" name="abc_action_bar_home_description">"Перейти на головну"</string>
+    <string msgid="8388173803310557296" name="abc_action_bar_up_description">"Перейти вгору"</string>
+    <string msgid="3937310113216875497" name="abc_action_menu_overflow_description">"Більше опцій"</string>
+    <string msgid="4692188335987374352" name="abc_action_mode_done">"Готово"</string>
+    <string msgid="1189761859438369441" name="abc_activity_chooser_view_see_all">"Показати всі"</string>
+    <string msgid="2165779757652331008" name="abc_activitychooserview_choose_application">"Вибрати програму"</string>
+    <string msgid="4215997306490295099" name="abc_capital_off">"ЗНИЖКА"</string>
+    <string msgid="884982626291842264" name="abc_capital_on">"УВІМК."</string>
+    <string msgid="8833365367933412986" name="abc_menu_alt_shortcut_label">"Alt+"</string>
+    <string msgid="2223301931652355242" name="abc_menu_ctrl_shortcut_label">"Ctrl+"</string>
+    <string msgid="838001238306846836" name="abc_menu_delete_shortcut_label">"delete"</string>
+    <string msgid="7986526966204849475" name="abc_menu_enter_shortcut_label">"enter"</string>
+    <string msgid="375214403600139847" name="abc_menu_function_shortcut_label">"Function+"</string>
+    <string msgid="4192209724446364286" name="abc_menu_meta_shortcut_label">"Meta+"</string>
+    <string msgid="4741552369836443843" name="abc_menu_shift_shortcut_label">"Shift+"</string>
+    <string msgid="5473865519181928982" name="abc_menu_space_shortcut_label">"пробіл"</string>
+    <string msgid="6180552449598693998" name="abc_menu_sym_shortcut_label">"Sym+"</string>
+    <string msgid="5520303668377388990" name="abc_prepend_shortcut_label">"Menu+"</string>
+    <string msgid="7208076849092622260" name="abc_search_hint">"Введіть пошуковий запит…"</string>
+    <string msgid="3741173234950517107" name="abc_searchview_description_clear">"Очистити запит"</string>
+    <string msgid="693312494995508443" name="abc_searchview_description_query">"Пошуковий запит"</string>
+    <string msgid="3417662926640357176" name="abc_searchview_description_search">"Пошук"</string>
+    <string msgid="1486535517437947103" name="abc_searchview_description_submit">"Наіслати запит"</string>
+    <string msgid="2293578557972875415" name="abc_searchview_description_voice">"Голосовий пошук"</string>
+    <string msgid="8875138169939072951" name="abc_shareactionprovider_share_with">"Поділитися:"</string>
+    <string msgid="9055268688411532828" name="abc_shareactionprovider_share_with_application">"Поділитися через додаток <ns1:g id="APPLICATION_NAME">%s</ns1:g>"</string>
+    <string msgid="1656852541809559762" name="abc_toolbar_collapse_description">"Згорнути"</string>
+    <string name="app_update_notification_channel_description" translation_description="Description of the notification channel for in-app updates">Прогрес в оновленні додатка</string>
+    <string name="app_update_notification_channel_name" translation_description="Name of the notification channel for in-app updates">Оновлення додатка</string>
+    <string name="back_button_description" translation_description="Description for image button (back) which aborts feedback">Назад</string>
     <string msgid="881409763997275156" name="call_notification_answer_action">"Відповісти"</string>
     <string msgid="8793775615905189152" name="call_notification_answer_video_action">"Відео"</string>
     <string msgid="3229508546291798546" name="call_notification_decline_action">"Відхилити"</string>
@@ -27,11 +57,27 @@
     <string name="common_open_on_phone">Відкрити на телефоні</string>
     <string name="common_signin_button_text">Увійти</string>
     <string name="common_signin_button_text_long">Увійти в облік. запис Google</string>
+    <string msgid="3260749812566568062" name="copy_toast_msg">"Посилання скопійовано в буфер обміну"</string>
     <string msgid="8038256446254964252" name="default_error_message">"Введено недійсні дані"</string>
     <string msgid="6312721426453364202" name="default_popup_window_title">"Спливаюче вікно"</string>
+    <string name="download_completed" translation_description="Title of notification when download of update has completed">Завантаження завершено</string>
+    <string name="download_failed" translation_description="Title of notification when download of update has failed">Помилка завантаження</string>
+    <string name="downloading_app_update" translation_description="Title of the notification showing during download of update">Завантаження оновлень додатка…</string>
     <string msgid="1890207353314751437" name="dropdown_menu">"Спадне меню"</string>
+    <string msgid="4566929209979330987" name="fallback_menu_item_copy_link">"Копіювати посилання"</string>
+    <string msgid="3413186855122069269" name="fallback_menu_item_open_in_browser">"Відкрити у веб-переглядачі"</string>
+    <string msgid="7145444925855055364" name="fallback_menu_item_share_link">"Надіслати посилання"</string>
+    <string name="feedback_launch_failed" translation_description="Toast explaining that launching the feedback functionality failed">Не вдалося запустити функцію створення відгуку</string>
+    <string name="feedback_no_release" translation_description="Toast explaining that feedback would have been sent, but was not, since development mode was active">Відгук не вдалося надіслати через режим розробника.</string>
+    <string name="feedback_notification_channel_description" translation_description="Description of the notification channel for in-app feedback">Показує сповіщення для введення відгуку про додаток</string>
+    <string name="feedback_notification_channel_name" translation_description="Name of the notification channel for in-app feedback">Відгук</string>
+    <string name="feedback_notification_text" translation_description="Text of notification encouraging testers to enter feedback for the app">Натисніть, щоб ввести відгук для додатка %1$s</string>
+    <string name="feedback_notification_title" translation_description="Title of notification encouraging testers to enter feedback">Нас цікавить ваша думка!</string>
+    <string name="feedback_text_hint" translation_description="Default text hint displayed in the text box where user should type their feedback">Хочете надіслати відгук? Порадьте нам, що можна покращити в цьому додатку.</string>
+    <string name="feedback_unidentified_release" translation_description="Toast explaining feedback can&apos;t be provided, because release can&apos;t be found">Випуск не знайдено. Можливо, цей додаток не був установлений за допомогою App Distribution або ви більше не маєте доступу до нього.</string>
     <string msgid="6827826412747255547" name="in_progress">"Виконується"</string>
     <string msgid="7933458017204019916" name="indeterminate">"Частково вибрано"</string>
+    <string name="install_failed" translation_description="Title of notification when installation of update has failed">Не вдалося встановити</string>
     <string msgid="2988463736136100848" name="m3c_bottom_sheet_collapse_description">"Згорнути нижній екран"</string>
     <string msgid="1555567894577437024" name="m3c_bottom_sheet_dismiss_description">"Закрити нижній екран"</string>
     <string msgid="8403354765404029791" name="m3c_bottom_sheet_drag_handle_description">"Маркер переміщення"</string>
@@ -90,10 +136,21 @@
     <string msgid="1805687647081129904" name="m3c_tooltip_long_press_label">"Показати спливаючу підказку"</string>
     <string msgid="5460405025248574620" name="m3c_tooltip_pane_description">"Спливаюча підказка"</string>
     <string msgid="542007171693138492" name="navigation_menu">"Меню навігації"</string>
+    <string name="no_screenshot" translation_description="Text displayed when there is no screenshot available to be included with the feedback">Знімок екрана (недоступний)</string>
     <string msgid="6610465462668679431" name="not_selected">"Не вибрано"</string>
+    <string name="notifications_group_name" translation_description="Title of the notification channel group for the SDK">Firebase App Distribution</string>
     <string msgid="5941395253238309765" name="range_end">"Кінець діапазону"</string>
     <string msgid="7097486360902471446" name="range_start">"Початок діапазону"</string>
+    <string name="screenshot" translation_description="Text displayed next to the checkbox which can be toggled to include/exclude a screenshot with the feedback">Знімок екрана</string>
+    <string name="screenshot_image_description" translation_description="Description for the screenshot image">Знімок екрана</string>
+    <string msgid="6264217191555673260" name="search_menu_title">"Пошук"</string>
     <string msgid="6043586758067023" name="selected">"Вибрано"</string>
+    <string name="send_button_description" translation_description="Description of image button (send) which sends feedback">Надіслати</string>
+    <string name="send_feedback" translation_description="Text next to send button which sends feedback">Надіслати відгук</string>
+    <string name="signin_dialog_title" translation_description="Title of the dialog encouraging the user to enable Firebase App Distribution features">Увімкнути функції тестування</string>
+    <string name="singin_dialog_message" translation_description="Content of the dialog encouraging the user to enable Firebase App Distribution features">Увімкніть такі функції тестування, як створення нових сповіщень і відгуків у додатку.</string>
+    <string name="singin_no_button" translation_description="Text on button to decline Firebase App Distribution features">Не зараз</string>
+    <string name="singin_yes_button" translation_description="Text on button to enable Firebase App Distribution features">Увімкнути</string>
     <string msgid="4139871816613051306" name="state_empty">"Пусто"</string>
     <string msgid="5834637030682409883" name="state_off">"Вимкнено"</string>
     <string msgid="1490883874751719580" name="state_on">"Увімкнено"</string>
@@ -103,4 +160,12 @@
     <string msgid="5946805113151406391" name="template_percent">"Відсотків: <ns1:g id="PERCENTAGE">%1$d</ns1:g>."</string>
     <string msgid="3765533235322692011" name="tooltip_description">"спливаюча підказка"</string>
     <string msgid="3124740595719787496" name="tooltip_label">"показати спливаючу підказку"</string>
+    <string name="unknown_sources_dialog_description" translation_description="Text of dialog describing why installation from unknown sources needs to be enabled">Щоб установити оновлення, дозвольте встановлення з невідомих джерел</string>
+    <string name="unknown_sources_dialog_title" translation_description="Title of dialog describing that installation from unknown sources needs to be enabled">Встановлення з невідомих джерел</string>
+    <string name="unknown_sources_yes_button" translation_description="Label on button launching settings to enable installation from unknown sources">Налаштування</string>
+    <string name="update_dialog_title" translation_description="Title of the dialog explaining to the user that a new version of the application is available">Доступна нова версія</string>
+    <string name="update_no_button" translation_description="Text on button to cancel update">Скасувати</string>
+    <string name="update_release_notes" translation_description="Text prefixing release notes">Примітки до випуску</string>
+    <string name="update_version_available" translation_description="Version string (and code) of the available update">Доступна версія %1$s (%2$d).</string>
+    <string name="update_yes_button" translation_description="Text on button to start update">Оновити</string>
 </resources>

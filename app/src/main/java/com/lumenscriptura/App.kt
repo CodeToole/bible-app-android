@@ -82,7 +82,7 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
     var currentChapter by rememberSaveable { mutableIntStateOf(1) }
     var targetScrollVerse by rememberSaveable { mutableStateOf<Int?>(null) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
-    val savedNotes = remember { mutableStateListOf<SavedStudyNote>() }
+    var savedNotes by rememberSaveable { mutableStateOf<List<SavedStudyNote>>(emptyList()) }
 
     val selectedBook = remember(currentBook) {
         books.find { it.longName == currentBook } ?: books.firstOrNull() ?: Book(10, "GEN", "Genesis", 50)
@@ -269,10 +269,10 @@ fun MainContent(bibleService: BibleService, books: List<Book>) {
                         bibleService = bibleService,
                         savedNotes = savedNotes,
                         onSaveNote = { input, blocks ->
-                            savedNotes.add(0, SavedStudyNote(inputReference = input, blocks = blocks))
+                            savedNotes = listOf(SavedStudyNote(inputReference = input, blocks = blocks)) + savedNotes
                         },
                         onDeleteNote = { note ->
-                            savedNotes.remove(note)
+                            savedNotes = savedNotes.filter { it.id != note.id }
                         }
                     )
                     Tab.HIGHLIGHTS -> HighlightsScreen(bibleService, onHighlightClick = { h -> navigateToScripture(h.bookName, h.chapter, h.verseNum) })
