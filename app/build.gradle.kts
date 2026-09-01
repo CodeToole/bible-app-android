@@ -11,7 +11,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.lumenscriptura"
+        applicationId = "com.waitaminutedigital.biblestudy"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

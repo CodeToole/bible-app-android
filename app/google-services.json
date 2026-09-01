@@ -33,6 +33,35 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:518267383585:android:0937b52b6cc93e279c5860",
+        "android_client_info": {
+          "package_name": "com.waitaminutedigital.biblestudy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "518267383585-76d9k1hotnn2vslaj46h4i2l6ht7o8j6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQrSBJyQ3GkKYvWywjoJqJ-4helBtE4GE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "518267383585-76d9k1hotnn2vslaj46h4i2l6ht7o8j6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

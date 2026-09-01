@@ -682,6 +682,7 @@
     <string name="abc_shareactionprovider_share_with_application">Share with <ns1:g example="Mail" id="application_name">%s</ns1:g></string>
     <string name="abc_toolbar_collapse_description">Collapse</string>
     <string name="androidx_startup" translatable="false">androidx.startup</string>
+    <string name="app_name">Bible Study App</string>
     <string name="app_update_notification_channel_description" translation_description="Description of the notification channel for in-app updates">Shows progress of in-app updates</string>
     <string name="app_update_notification_channel_name" translation_description="Name of the notification channel for in-app updates">App updates</string>
     <string name="back_button_description" translation_description="Description for image button (back) which aborts feedback">Back</string>
@@ -733,7 +734,7 @@
     <string name="feedback_unidentified_release" translation_description="Toast explaining feedback can&apos;t be provided, because release can&apos;t be found">Release not found. This app may not have been installed by App Distribution, or you may no longer have access.</string>
     <string name="gcm_defaultSenderId" translatable="false">518267383585</string>
     <string name="google_api_key" translatable="false">AIzaSyBQrSBJyQ3GkKYvWywjoJqJ-4helBtE4GE</string>
-    <string name="google_app_id" translatable="false">1:518267383585:android:ab2798f10acefa659c5860</string>
+    <string name="google_app_id" translatable="false">1:518267383585:android:0937b52b6cc93e279c5860</string>
     <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBQrSBJyQ3GkKYvWywjoJqJ-4helBtE4GE</string>
     <string name="google_storage_bucket" translatable="false">bible-study-ap.firebasestorage.app</string>
     <string name="in_progress">In progress</string>

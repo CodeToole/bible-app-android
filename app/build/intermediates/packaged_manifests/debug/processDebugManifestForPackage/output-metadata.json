@@ -4,7 +4,7 @@
     "type": "PACKAGED_MANIFESTS",
     "kind": "Directory"
   },
-  "applicationId": "com.lumenscriptura",
+  "applicationId": "com.waitaminutedigital.biblestudy",
   "variantName": "debug",
   "elements": [
     {
