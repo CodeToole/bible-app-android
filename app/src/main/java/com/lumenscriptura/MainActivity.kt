@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Firebase App Distribution In-App Update Alerts
-        if (!BuildConfig.DEBUG || true) {
+        if (BuildConfig.DEBUG) {
             FirebaseAppDistribution.getInstance().updateIfNewReleaseAvailable()
                 .addOnFailureListener {
                     // Handle failure

@@ -3,13 +3,27 @@
   <component name="AppInsightsSettings">
     <option name="tabSettings">
       <map>
+        <entry key="Android vitals">
+          <value>
+            <InsightsFilterSettings>
+              <option name="connection">
+                <ConnectionSetting>
+                  <option name="appId" value="com.waitaminutedigital.biblestudy" />
+                </ConnectionSetting>
+              </option>
+              <option name="signal" value="SIGNAL_UNSPECIFIED" />
+              <option name="timeIntervalDays" value="SEVEN_DAYS" />
+              <option name="visibilityType" value="ALL" />
+            </InsightsFilterSettings>
+          </value>
+        </entry>
         <entry key="Firebase Crashlytics">
           <value>
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.lumenscriptura" />
-                  <option name="mobileSdkAppId" value="1:518267383585:android:ab2798f10acefa659c5860" />
+                  <option name="appId" value="com.waitaminutedigital.biblestudy" />
+                  <option name="mobileSdkAppId" value="1:518267383585:android:0937b52b6cc93e279c5860" />
                   <option name="projectId" value="bible-study-ap" />
                   <option name="projectNumber" value="518267383585" />
                 </ConnectionSetting>
