@@ -4,8 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.remember
-import com.google.firebase.appdistribution.FirebaseAppDistribution
-import com.lumenscriptura.BuildConfig
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,10 +11,18 @@ class MainActivity : ComponentActivity() {
 
         // Firebase App Distribution In-App Update Alerts
         if (BuildConfig.DEBUG) {
-            FirebaseAppDistribution.getInstance().updateIfNewReleaseAvailable()
-                .addOnFailureListener {
+            try {
+                val appDistributionClass = Class.forName("com.google.firebase.appdistribution.FirebaseAppDistribution")
+                val getInstanceMethod = appDistributionClass.getMethod("getInstance")
+                val instance = getInstanceMethod.invoke(null)
+                val updateMethod = appDistributionClass.getMethod("updateIfNewReleaseAvailable")
+                val task = updateMethod.invoke(instance) as? com.google.android.gms.tasks.Task<*>
+                task?.addOnFailureListener {
                     // Handle failure
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         setContent {
