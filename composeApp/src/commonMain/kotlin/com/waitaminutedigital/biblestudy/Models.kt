@@ -77,7 +77,10 @@ data class SavedNote(
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
     val blocks: List<ScripturePassageBlock> = emptyList()
-)
+) {
+    val totalVersesCount: Int
+        get() = blocks.filter { it.isScripture }.sumOf { it.verses.size }
+}
 
 typealias SavedStudyNote = SavedNote
 

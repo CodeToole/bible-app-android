@@ -43,6 +43,7 @@ fun StudyNotesScreen(
     var noteTitleInput by remember { mutableStateOf("") }
     var noteContentInput by remember { mutableStateOf("") }
     var blocks by remember { mutableStateOf<List<ScripturePassageBlock>>(emptyList()) }
+    var isParsing by remember { mutableStateOf(false) }
     var isInputExpanded by remember { mutableStateOf(true) }
 
     var qVerseRef by remember { mutableStateOf(initialRef) }
@@ -131,15 +132,101 @@ fun StudyNotesScreen(
                         OutlinedTextField(
                             value = referenceInput,
                             onValueChange = { referenceInput = it },
-                            label = { Text("Scripture Reference / Study Input", color = GoldText) },
+                            label = { Text("Scripture Reference(s) (Supports Multi-Line)", color = GoldText) },
                             minLines = 2,
-                            maxLines = 4,
+                            maxLines = 5,
                             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = GoldAccent,
                                 unfocusedBorderColor = Color.Gray
                             )
                         )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    scope.launch {
+                                        isParsing = true
+                                        blocks = noteParserService.parseAndExpand(referenceInput)
+                                        isParsing = false
+                                    }
+                                },
+                                enabled = !isParsing && referenceInput.isNotBlank(),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldText)
+                            ) {
+                                if (isParsing) {
+                                    CircularProgressIndicator(modifier = Modifier.size(14.dp), color = GoldText, strokeWidth = 2.dp)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("PARSING...", fontSize = 12.sp)
+                                } else {
+                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("PARSE SCRIPTURES", fontSize = 12.sp)
+                                }
+                            }
+
+                            if (blocks.isNotEmpty()) {
+                                Text(
+                                    "${blocks.filter { it.isScripture }.size} passage(s) verified",
+                                    fontSize = 12.sp,
+                                    color = Color.Green
+                                )
+                            }
+                        }
+
+                        if (blocks.isNotEmpty()) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            "Parsed Passage Preview (${blocks.filter { it.isScripture }.sumOf { it.verses.size }} total verses):",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = GoldText,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        IconButton(onClick = { blocks = emptyList() }, modifier = Modifier.size(20.dp)) {
+                                            Icon(Icons.Default.Close, contentDescription = "Clear Preview", tint = Color.Gray)
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    blocks.forEach { block ->
+                                        if (block.isScripture) {
+                                            Text(
+                                                block.referenceHeader,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = GoldAccent,
+                                                modifier = Modifier.padding(top = 6.dp)
+                                            )
+                                            block.verses.forEach { v ->
+                                                Text(
+                                                    "${v.verseNum}. ${v.text}",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.LightGray,
+                                                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                                                )
+                                            }
+                                        } else if (block.plainText.isNotBlank()) {
+                                            Text(
+                                                block.plainText,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color.Gray,
+                                                modifier = Modifier.padding(top = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         OutlinedTextField(
                             value = noteContentInput,
                             onValueChange = { noteContentInput = it },
@@ -152,25 +239,36 @@ fun StudyNotesScreen(
                                 unfocusedBorderColor = Color.Gray
                             )
                         )
-                        Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+
+                        Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.End) {
                             Button(
                                 onClick = {
                                     scope.launch {
-                                        blocks = noteParserService.parseAndExpand(referenceInput)
+                                        val finalBlocks = if (blocks.isEmpty() && referenceInput.isNotBlank()) {
+                                            noteParserService.parseAndExpand(referenceInput)
+                                        } else {
+                                            blocks
+                                        }
                                         val newNote = SavedNote(
                                             title = if (noteTitleInput.isBlank()) "Study Note" else noteTitleInput,
                                             verseRef = referenceInput,
                                             content = noteContentInput,
-                                            blocks = blocks
+                                            blocks = finalBlocks
                                         )
                                         bibleService.saveNote(newNote)
                                         notes = bibleService.getNotes()
+                                        noteTitleInput = ""
+                                        referenceInput = ""
+                                        noteContentInput = ""
+                                        blocks = emptyList()
                                         isInputExpanded = false
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = Color.Black)
                             ) {
-                                Text("PARSE & SAVE")
+                                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("SAVE NOTE")
                             }
                         }
                     }

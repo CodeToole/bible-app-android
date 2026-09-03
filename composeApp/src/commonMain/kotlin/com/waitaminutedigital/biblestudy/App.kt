@@ -360,45 +360,18 @@ fun MainContent(bibleService: IBibleService, books: List<Book>) {
             }
 
             if (showChapterPickerDialog) {
-                AlertDialog(
-                    onDismissRequest = { showChapterPickerDialog = false },
-                    title = { Text("Select Chapter in ${selectedBook.longName}", color = GoldText) },
-                    text = {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(5),
-                            modifier = Modifier.heightIn(max = 280.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            items((1..selectedBook.totalChapters).toList()) { ch ->
-                                Box(
-                                    modifier = Modifier
-                                        .aspectRatio(1f)
-                                        .background(
-                                            if (ch == currentChapter) GoldAccent else MaterialTheme.colorScheme.surfaceVariant,
-                                            RoundedCornerShape(6.dp)
-                                        )
-                                        .clickable {
-                                            currentChapter = ch
-                                            targetScrollVerse = null
-                                            showChapterPickerDialog = false
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        ch.toString(),
-                                        fontWeight = if (ch == currentChapter) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (ch == currentChapter) Color.Black else Color.White
-                                    )
-                                }
-                            }
-                        }
+                BookChapterNavigatorModal(
+                    books = books,
+                    currentBookName = selectedBook.longName,
+                    currentChapter = currentChapter,
+                    onChapterSelected = { book, chapter ->
+                        currentBook = book.longName
+                        currentChapter = chapter
+                        targetScrollVerse = null
+                        activeTab = Tab.SCRIPTURE
+                        showChapterPickerDialog = false
                     },
-                    confirmButton = {
-                        TextButton(onClick = { showChapterPickerDialog = false }) {
-                            Text("CLOSE")
-                        }
-                    }
+                    onDismiss = { showChapterPickerDialog = false }
                 )
             }
 
@@ -783,5 +756,174 @@ fun HistoryScreen(bibleService: IBibleService, onHistoryClick: (ReadingHistory) 
             }
             HorizontalDivider(color = Color.Gray.copy(alpha = 0.1f))
         }
+    }
+}
+
+@Composable
+fun BookChapterNavigatorModal(
+    books: List<Book>,
+    currentBookName: String,
+    currentChapter: Int,
+    onChapterSelected: (Book, Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    var expandedOT by remember { mutableStateOf(true) }
+    var expandedNT by remember { mutableStateOf(true) }
+    var expandedBookNumber by remember { mutableStateOf<Int?>(books.find { it.longName == currentBookName }?.bookNumber) }
+
+    val filteredBooks = remember(books, searchQuery) {
+        if (searchQuery.isBlank()) books
+        else books.filter { it.longName.contains(searchQuery, ignoreCase = true) || it.shortName.contains(searchQuery, ignoreCase = true) }
+    }
+
+    val otBooks = remember(filteredBooks) { filteredBooks.filter { it.bookNumber <= 460 } }
+    val ntBooks = remember(filteredBooks) { filteredBooks.filter { it.bookNumber > 460 } }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("BIBLE BOOK & CHAPTER NAVIGATOR", style = MaterialTheme.typography.titleMedium, color = GoldText, modifier = Modifier.weight(1f))
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.Gray)
+                }
+            }
+        },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search 66 Books...", fontSize = 12.sp) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = GoldAccent) },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GoldAccent, unfocusedBorderColor = Color.Gray)
+                )
+
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    if (otBooks.isNotEmpty()) {
+                        item {
+                            ExpandableSection("Old Testament (39 Books)", expandedOT) { expandedOT = !expandedOT }
+                        }
+                        if (expandedOT) {
+                            items(otBooks) { book ->
+                                AccordionBookItem(
+                                    book = book,
+                                    isSelectedBook = book.longName == currentBookName,
+                                    currentChapter = currentChapter,
+                                    isExpanded = expandedBookNumber == book.bookNumber,
+                                    onToggleExpand = {
+                                        expandedBookNumber = if (expandedBookNumber == book.bookNumber) null else book.bookNumber
+                                    },
+                                    onChapterSelected = onChapterSelected
+                                )
+                            }
+                        }
+                    }
+
+                    if (ntBooks.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            ExpandableSection("New Testament (27 Books)", expandedNT) { expandedNT = !expandedNT }
+                        }
+                        if (expandedNT) {
+                            items(ntBooks) { book ->
+                                AccordionBookItem(
+                                    book = book,
+                                    isSelectedBook = book.longName == currentBookName,
+                                    currentChapter = currentChapter,
+                                    isExpanded = expandedBookNumber == book.bookNumber,
+                                    onToggleExpand = {
+                                        expandedBookNumber = if (expandedBookNumber == book.bookNumber) null else book.bookNumber
+                                    },
+                                    onChapterSelected = onChapterSelected
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("DISMISS", color = GoldText)
+            }
+        }
+    )
+}
+
+@Composable
+fun AccordionBookItem(
+    book: Book,
+    isSelectedBook: Boolean,
+    currentChapter: Int,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    onChapterSelected: (Book, Int) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggleExpand() }
+                .padding(vertical = 10.dp, horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = book.longName,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (isSelectedBook) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelectedBook) GoldAccent else Color.White,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "${book.totalChapters} Ch",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Icon(
+                if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = null,
+                tint = GoldText,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        if (isExpanded) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(5),
+                modifier = Modifier
+                    .heightIn(max = 220.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items((1..book.totalChapters).toList()) { ch ->
+                    val isSelectedChapter = isSelectedBook && ch == currentChapter
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .background(
+                                if (isSelectedChapter) GoldAccent else MaterialTheme.colorScheme.surfaceVariant,
+                                RoundedCornerShape(6.dp)
+                            )
+                            .clickable { onChapterSelected(book, ch) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = ch.toString(),
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelectedChapter) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isSelectedChapter) Color.Black else Color.White
+                        )
+                    }
+                }
+            }
+        }
+        HorizontalDivider(color = Color.Gray.copy(alpha = 0.15f))
     }
 }

@@ -162,7 +162,7 @@ class NoteParserService(private val bibleService: IBibleService) {
 
         val preCleaned = preClean(rawContent)
         val separated = ConcatenatedReferenceSplitRegex.replace(preCleaned, "\n")
-        val lines = separated.split('\n', '\r')
+        val lines = separated.split('\n', '\r', ';')
 
         for (line in lines) {
             val trimmed = line.trim()
@@ -208,7 +208,7 @@ class NoteParserService(private val bibleService: IBibleService) {
                             val rangeHeader = segment.ranges.joinToString(", ") {
                                 if (it.start == it.end) "${it.start}" else "${it.start}-${it.end}"
                             }
-                            val header = "$canonBook ${segment.chapter}:$rangeHeader"
+                            val header = "=== $canonBook ${segment.chapter}:$rangeHeader ==="
 
                             blocks.add(
                                 ScripturePassageBlock(
