@@ -34,18 +34,25 @@ fun App() {
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var books by remember { mutableStateOf<List<Book>>(emptyList()) }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
+        println("App: Initializing BibleService.load()...")
         bibleService.load(
             onSuccess = {
-                scope.launch {
+                println("App: BibleService.load() succeeded.")
+                try {
                     books = bibleService.getAllBooks()
+                    println("App: Loaded ${books.size} books into state.")
+                } catch (e: Throwable) {
+                    println("App: Error fetching books: ${e.message}")
+                    errorMessage = "Failed to fetch book index"
+                } finally {
                     isLoading = false
                 }
             },
-            onError = {
-                errorMessage = it
+            onError = { err ->
+                println("App: BibleService.load() error: $err")
+                errorMessage = err
                 isLoading = false
             }
         )
@@ -76,13 +83,21 @@ fun App() {
 fun MainContent(bibleService: IBibleService, books: List<Book>) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
+    val noteParserService = remember { NoteParserService(bibleService) }
 
     var activeTab by rememberSaveable { mutableStateOf(Tab.SCRIPTURE) }
     var currentBook by rememberSaveable { mutableStateOf(books.firstOrNull()?.longName ?: "Genesis") }
     var currentChapter by rememberSaveable { mutableIntStateOf(1) }
     var targetScrollVerse by rememberSaveable { mutableStateOf<Int?>(null) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
-    var savedNotes by rememberSaveable { mutableStateOf<List<SavedStudyNote>>(emptyList()) }
+    var showProfileDialog by remember { mutableStateOf(false) }
+    var showChapterPickerDialog by remember { mutableStateOf(false) }
+
+    // Quick Add Modal Dialog State
+    var showQuickAddDialog by remember { mutableStateOf(false) }
+    var quickAddType by remember { mutableStateOf("NOTE") } // "NOTE" or "QUESTION"
+    var quickAddRef by remember { mutableStateOf("") }
+    var quickAddText by remember { mutableStateOf("") }
 
     val selectedBook = remember(currentBook) {
         books.find { it.longName == currentBook } ?: books.firstOrNull() ?: Book(10, "GEN", "Genesis", 50)
@@ -98,6 +113,34 @@ fun MainContent(bibleService: IBibleService, books: List<Book>) {
         }
     }
 
+    fun nextChapter() {
+        if (currentChapter < selectedBook.totalChapters) {
+            currentChapter++
+            targetScrollVerse = null
+        } else {
+            val nextBookIndex = books.indexOf(selectedBook) + 1
+            if (nextBookIndex < books.size) {
+                currentBook = books[nextBookIndex].longName
+                currentChapter = 1
+                targetScrollVerse = null
+            }
+        }
+    }
+
+    fun previousChapter() {
+        if (currentChapter > 1) {
+            currentChapter--
+            targetScrollVerse = null
+        } else {
+            val prevBookIndex = books.indexOf(selectedBook) - 1
+            if (prevBookIndex >= 0) {
+                currentBook = books[prevBookIndex].longName
+                currentChapter = books[prevBookIndex].totalChapters
+                targetScrollVerse = null
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -110,12 +153,9 @@ fun MainContent(bibleService: IBibleService, books: List<Book>) {
                     selectedBook = selectedBook,
                     onBookSelected = { book ->
                         currentBook = book.longName
-                        currentChapter = 1
-                        targetScrollVerse = null
-                        activeTab = Tab.SCRIPTURE
-                        coroutineScope.launch { drawerState.close() }
                     },
-                    onChapterSelected = { chapter ->
+                    onChapterSelected = { book, chapter ->
+                        currentBook = book.longName
                         currentChapter = chapter
                         targetScrollVerse = null
                         activeTab = Tab.SCRIPTURE
@@ -131,40 +171,18 @@ fun MainContent(bibleService: IBibleService, books: List<Book>) {
                     CenterAlignedTopAppBar(
                         title = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = {
-                                    if (currentChapter > 1) {
-                                        currentChapter--
-                                        targetScrollVerse = null
-                                    } else {
-                                        val prevBookIndex = books.indexOf(selectedBook) - 1
-                                        if (prevBookIndex >= 0) {
-                                            currentBook = books[prevBookIndex].longName
-                                            currentChapter = books[prevBookIndex].totalChapters
-                                            targetScrollVerse = null
-                                        }
-                                    }
-                                }) {
-                                    Icon(Icons.Default.ChevronLeft, contentDescription = "Previous")
+                                IconButton(onClick = { previousChapter() }) {
+                                    Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Chapter")
                                 }
                                 Text(
                                     text = "${selectedBook.longName.uppercase()} $currentChapter",
                                     style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                    modifier = Modifier
+                                        .clickable { showChapterPickerDialog = true }
+                                        .padding(horizontal = 8.dp)
                                 )
-                                IconButton(onClick = {
-                                    if (currentChapter < selectedBook.totalChapters) {
-                                        currentChapter++
-                                        targetScrollVerse = null
-                                    } else {
-                                        val nextBookIndex = books.indexOf(selectedBook) + 1
-                                        if (nextBookIndex < books.size) {
-                                            currentBook = books[nextBookIndex].longName
-                                            currentChapter = 1
-                                            targetScrollVerse = null
-                                        }
-                                    }
-                                }) {
-                                    Icon(Icons.Default.ChevronRight, contentDescription = "Next")
+                                IconButton(onClick = { nextChapter() }) {
+                                    Icon(Icons.Default.ChevronRight, contentDescription = "Next Chapter")
                                 }
                             }
                         },
@@ -182,7 +200,8 @@ fun MainContent(bibleService: IBibleService, books: List<Book>) {
                                     .padding(end = 8.dp)
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary),
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .clickable { showProfileDialog = true },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text("C", color = Color.Black, fontWeight = FontWeight.Bold)
@@ -237,14 +256,15 @@ fun MainContent(bibleService: IBibleService, books: List<Book>) {
                                     .background(MaterialTheme.colorScheme.primary, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.Black)
+                                Icon(Icons.Default.Add, contentDescription = "Quick Add", tint = Color.Black)
                             }
                         },
                         label = { Text("Quick Add") },
                         selected = false,
                         onClick = { 
-                            activeTab = Tab.STUDY_NOTES
-                            targetScrollVerse = null
+                            quickAddRef = "${selectedBook.longName} $currentChapter"
+                            quickAddText = ""
+                            showQuickAddDialog = true
                         }
                     )
                     NavigationBarItem(
@@ -264,19 +284,39 @@ fun MainContent(bibleService: IBibleService, books: List<Book>) {
         ) { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
                 when (activeTab) {
-                    Tab.SCRIPTURE -> ScriptureReader(bibleService, selectedBook, currentChapter, targetScrollVerse, onScrollComplete = { targetScrollVerse = null })
-                    Tab.STUDY_NOTES -> StudyNotesScreen(
+                    Tab.SCRIPTURE -> ScriptureReader(
                         bibleService = bibleService,
-                        savedNotes = savedNotes,
-                        onSaveNote = { input, blocks ->
-                            savedNotes = listOf(SavedStudyNote(inputReference = input, blocks = blocks)) + savedNotes
+                        book = selectedBook,
+                        chapter = currentChapter,
+                        targetScrollVerse = targetScrollVerse,
+                        onScrollComplete = { targetScrollVerse = null },
+                        onNextChapter = { nextChapter() },
+                        onPreviousChapter = { previousChapter() },
+                        onQuickAddNote = { refBook, ch ->
+                            quickAddRef = "$refBook $ch"
+                            quickAddType = "NOTE"
+                            showQuickAddDialog = true
                         },
-                        onDeleteNote = { note ->
-                            savedNotes = savedNotes.filter { it.id != note.id }
+                        onQuickAddQuestion = { refBook, ch ->
+                            quickAddRef = "$refBook $ch"
+                            quickAddType = "QUESTION"
+                            showQuickAddDialog = true
                         }
                     )
-                    Tab.HIGHLIGHTS -> HighlightsScreen(bibleService, onHighlightClick = { h -> navigateToScripture(h.bookName, h.chapter, h.verseNum) })
-                    Tab.HISTORY -> HistoryScreen(bibleService, onHistoryClick = { item -> navigateToScripture(item.bookName, item.chapter) })
+                    Tab.STUDY_NOTES -> StudyNotesScreen(
+                        bibleService = bibleService,
+                        activeTabInitial = NotesTab.STUDY_NOTES
+                    )
+                    Tab.HIGHLIGHTS -> BookmarksAndHighlightsScreen(
+                        bibleService = bibleService,
+                        onNavigate = { bookName, ch, verseNum ->
+                            navigateToScripture(bookName, ch, verseNum)
+                        }
+                    )
+                    Tab.HISTORY -> HistoryScreen(
+                        bibleService = bibleService,
+                        onHistoryClick = { item -> navigateToScripture(item.book, item.chapter) }
+                    )
                 }
             }
             
@@ -293,6 +333,153 @@ fun MainContent(bibleService: IBibleService, books: List<Book>) {
                     onDismiss = { showSearch = false }
                 )
             }
+
+            if (showProfileDialog) {
+                AlertDialog(
+                    onDismissRequest = { showProfileDialog = false },
+                    title = { Text("Bible Study App", color = GoldText) },
+                    text = {
+                        Column {
+                            Text("King James Version (KJV)", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                            Text("WaitaMinute Digital", style = MaterialTheme.typography.bodyMedium, color = GoldAccent)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("Version: 1.0.3", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                            Text("Platform: Cross-Platform (Android & Web Wasm)", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                            Text("Storage: Local Persistent Storage Active", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showProfileDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = Color.Black)
+                        ) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
+
+            if (showChapterPickerDialog) {
+                AlertDialog(
+                    onDismissRequest = { showChapterPickerDialog = false },
+                    title = { Text("Select Chapter in ${selectedBook.longName}", color = GoldText) },
+                    text = {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(5),
+                            modifier = Modifier.heightIn(max = 280.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            items((1..selectedBook.totalChapters).toList()) { ch ->
+                                Box(
+                                    modifier = Modifier
+                                        .aspectRatio(1f)
+                                        .background(
+                                            if (ch == currentChapter) GoldAccent else MaterialTheme.colorScheme.surfaceVariant,
+                                            RoundedCornerShape(6.dp)
+                                        )
+                                        .clickable {
+                                            currentChapter = ch
+                                            targetScrollVerse = null
+                                            showChapterPickerDialog = false
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        ch.toString(),
+                                        fontWeight = if (ch == currentChapter) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (ch == currentChapter) Color.Black else Color.White
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showChapterPickerDialog = false }) {
+                            Text("CLOSE")
+                        }
+                    }
+                )
+            }
+
+            if (showQuickAddDialog) {
+                AlertDialog(
+                    onDismissRequest = { showQuickAddDialog = false },
+                    title = { Text("Quick Add to ${quickAddRef}", color = GoldText) },
+                    text = {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                FilterChip(
+                                    selected = quickAddType == "NOTE",
+                                    onClick = { quickAddType = "NOTE" },
+                                    label = { Text("Study Note") }
+                                )
+                                FilterChip(
+                                    selected = quickAddType == "QUESTION",
+                                    onClick = { quickAddType = "QUESTION" },
+                                    label = { Text("Question for Study") }
+                                )
+                            }
+                            OutlinedTextField(
+                                value = quickAddRef,
+                                onValueChange = { quickAddRef = it },
+                                label = { Text("Verse / Passage Reference") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                            )
+                            OutlinedTextField(
+                                value = quickAddText,
+                                onValueChange = { quickAddText = it },
+                                label = { Text(if (quickAddType == "NOTE") "Note Content" else "Question for Pastor / Study") },
+                                minLines = 3,
+                                maxLines = 6,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                if (quickAddText.isNotBlank()) {
+                                    coroutineScope.launch {
+                                        if (quickAddType == "NOTE") {
+                                            val blocks = noteParserService.parseAndExpand(quickAddRef)
+                                            bibleService.saveNote(
+                                                SavedNote(
+                                                    title = "Quick Note ($quickAddRef)",
+                                                    verseRef = quickAddRef,
+                                                    content = quickAddText,
+                                                    blocks = blocks
+                                                )
+                                            )
+                                        } else {
+                                            bibleService.saveQuestion(
+                                                SavedQuestion(
+                                                    verseRef = quickAddRef,
+                                                    questionText = quickAddText
+                                                )
+                                            )
+                                        }
+                                        showQuickAddDialog = false
+                                        activeTab = Tab.STUDY_NOTES
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = Color.Black)
+                        ) {
+                            Text("SAVE")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showQuickAddDialog = false }) {
+                            Text("CANCEL")
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -302,7 +489,7 @@ fun DrawerContent(
     books: List<Book>,
     selectedBook: Book,
     onBookSelected: (Book) -> Unit,
-    onChapterSelected: (Int) -> Unit
+    onChapterSelected: (Book, Int) -> Unit
 ) {
     var expandedOT by remember { mutableStateOf(true) }
     var expandedNT by remember { mutableStateOf(false) }
@@ -391,23 +578,47 @@ fun BookItem(
     book: Book,
     isSelected: Boolean,
     onBookSelected: (Book) -> Unit,
-    onChapterSelected: (Int) -> Unit
+    onChapterSelected: (Book, Int) -> Unit
 ) {
+    var showChapterGrid by remember { mutableStateOf(isSelected) }
+
     Column {
-        Text(
-            text = book.longName,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onBookSelected(book) }
-                .padding(horizontal = 32.dp, vertical = 8.dp),
-            color = if (isSelected) GoldText else White
-        )
-        if (isSelected) {
+                .clickable {
+                    showChapterGrid = !showChapterGrid
+                    onBookSelected(book)
+                }
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = book.longName,
+                modifier = Modifier.weight(1f),
+                color = if (isSelected || showChapterGrid) GoldText else White,
+                fontWeight = if (isSelected || showChapterGrid) FontWeight.Bold else FontWeight.Normal
+            )
+            Text(
+                text = "${book.totalChapters} Ch",
+                fontSize = 11.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Icon(
+                if (showChapterGrid) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = "Chapters",
+                tint = GoldText,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        if (showChapterGrid) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(5),
                 modifier = Modifier
-                    .heightIn(max = 300.dp)
-                    .padding(horizontal = 32.dp, vertical = 8.dp),
+                    .heightIn(max = 240.dp)
+                    .padding(horizontal = 32.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -416,10 +627,10 @@ fun BookItem(
                         modifier = Modifier
                             .aspectRatio(1f)
                             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
-                            .clickable { onChapterSelected(chapter) },
+                            .clickable { onChapterSelected(book, chapter) },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(chapter.toString(), fontSize = 12.sp)
+                        Text(chapter.toString(), fontSize = 12.sp, color = GoldText)
                     }
                 }
             }
@@ -428,27 +639,94 @@ fun BookItem(
 }
 
 @Composable
-fun HighlightsScreen(bibleService: IBibleService, onHighlightClick: (Highlight) -> Unit) {
-    var highlights by remember { mutableStateOf<List<Highlight>>(emptyList()) }
-    
+fun BookmarksAndHighlightsScreen(
+    bibleService: IBibleService,
+    onNavigate: (String, Int, Int) -> Unit
+) {
+    var highlights by remember { mutableStateOf<List<VerseHighlight>>(emptyList()) }
+    var bookmarks by remember { mutableStateOf<List<Bookmark>>(emptyList()) }
+    var activeFilter by remember { mutableStateOf("ALL") } // "ALL", "BOOKMARKS", "HIGHLIGHTS"
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         highlights = bibleService.getHighlights()
+        bookmarks = bibleService.getBookmarks()
     }
 
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         item {
-            Text("Highlights & Bookmarks", style = MaterialTheme.typography.titleLarge, color = GoldText, modifier = Modifier.padding(vertical = 16.dp))
+            Text("Bookmarks & Verse Highlights", style = MaterialTheme.typography.titleLarge, color = GoldText, modifier = Modifier.padding(bottom = 12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 16.dp)) {
+                FilterChip(
+                    selected = activeFilter == "ALL",
+                    onClick = { activeFilter = "ALL" },
+                    label = { Text("ALL (${bookmarks.size + highlights.size})") }
+                )
+                FilterChip(
+                    selected = activeFilter == "BOOKMARKS",
+                    onClick = { activeFilter = "BOOKMARKS" },
+                    label = { Text("BOOKMARKS (${bookmarks.size})") }
+                )
+                FilterChip(
+                    selected = activeFilter == "HIGHLIGHTS",
+                    onClick = { activeFilter = "HIGHLIGHTS" },
+                    label = { Text("HIGHLIGHTS (${highlights.size})") }
+                )
+            }
         }
-        items(highlights) { highlight ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clickable { onHighlightClick(highlight) },
-                colors = CardDefaults.cardColors(containerColor = parseHexColor(highlight.colorHex).copy(alpha = 0.2f))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("${highlight.bookName} ${highlight.chapter}:${highlight.verseNum}", style = MaterialTheme.typography.labelMedium, color = GoldText)
+
+        if (activeFilter == "ALL" || activeFilter == "BOOKMARKS") {
+            items(bookmarks) { b ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable { onNavigate(b.book, b.chapter, b.verseNumber) },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Bookmark, contentDescription = null, tint = GoldAccent, modifier = Modifier.padding(end = 12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("${b.book} ${b.chapter}:${b.verseNumber}", style = MaterialTheme.typography.titleSmall, color = GoldText)
+                            Text("Tap to jump to chapter", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        }
+                        IconButton(onClick = {
+                            scope.launch {
+                                bibleService.removeBookmark(b.book, b.chapter, b.verseNumber)
+                                bookmarks = bibleService.getBookmarks()
+                            }
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove Bookmark", tint = Color.Gray, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                }
+            }
+        }
+
+        if (activeFilter == "ALL" || activeFilter == "HIGHLIGHTS") {
+            items(highlights) { highlight ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable { onNavigate(highlight.book, highlight.chapter, highlight.verseNumber) },
+                    colors = CardDefaults.cardColors(containerColor = parseHexColor(highlight.colorHex).copy(alpha = 0.25f))
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.FormatColorFill, contentDescription = null, tint = parseHexColor(highlight.colorHex), modifier = Modifier.padding(end = 12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("${highlight.book} ${highlight.chapter}:${highlight.verseNumber}", style = MaterialTheme.typography.titleSmall, color = GoldText)
+                            Text("Tap to jump to verse", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        }
+                        IconButton(onClick = {
+                            scope.launch {
+                                bibleService.removeHighlight(highlight.book, highlight.chapter, highlight.verseNumber)
+                                highlights = bibleService.getHighlights()
+                            }
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove Highlight", tint = Color.Gray, modifier = Modifier.size(20.dp))
+                        }
+                    }
                 }
             }
         }
@@ -456,16 +734,29 @@ fun HighlightsScreen(bibleService: IBibleService, onHighlightClick: (Highlight) 
 }
 
 @Composable
-fun HistoryScreen(bibleService: IBibleService, onHistoryClick: (HistoryItem) -> Unit) {
-    var history by remember { mutableStateOf<List<HistoryItem>>(emptyList()) }
-    
+fun HistoryScreen(bibleService: IBibleService, onHistoryClick: (ReadingHistory) -> Unit) {
+    var history by remember { mutableStateOf<List<ReadingHistory>>(emptyList()) }
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         history = bibleService.getHistory()
     }
 
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         item {
-            Text("Reading History", style = MaterialTheme.typography.titleLarge, color = GoldText, modifier = Modifier.padding(vertical = 16.dp))
+            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Reading History", style = MaterialTheme.typography.titleLarge, color = GoldText, modifier = Modifier.weight(1f))
+                if (history.isNotEmpty()) {
+                    TextButton(onClick = {
+                        scope.launch {
+                            bibleService.clearHistory()
+                            history = bibleService.getHistory()
+                        }
+                    }) {
+                        Text("CLEAR ALL", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                    }
+                }
+            }
         }
         items(history) { item ->
             Row(
@@ -477,8 +768,17 @@ fun HistoryScreen(bibleService: IBibleService, onHistoryClick: (HistoryItem) -> 
             ) {
                 Icon(Icons.Default.History, contentDescription = null, tint = GoldText, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text("${item.bookName} ${item.chapter}", style = MaterialTheme.typography.bodyLarge)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("${item.book} Chapter ${item.chapter}", style = MaterialTheme.typography.bodyLarge)
+                    Text("Tap to resume reading", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                }
+                IconButton(onClick = {
+                    scope.launch {
+                        bibleService.removeHistoryItem(item.book, item.chapter)
+                        history = bibleService.getHistory()
+                    }
+                }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Gray, modifier = Modifier.size(20.dp))
                 }
             }
             HorizontalDivider(color = Color.Gray.copy(alpha = 0.1f))

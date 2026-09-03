@@ -39,29 +39,61 @@ data class ScripturePassageBlock(
 )
 
 @Serializable
-data class Highlight(
-    val bookName: String,
+data class VerseHighlight(
+    val book: String,
     val chapter: Int,
-    val verseNum: Int,
+    val verseNumber: Int,
     val colorHex: String,
     val timestamp: Long = 0L
 )
 
+typealias Highlight = VerseHighlight
+
 @Serializable
-data class HistoryItem(
-    val bookName: String,
+data class ReadingHistory(
+    val book: String,
     val chapter: Int,
-    val timestamp: Long = 0L
+    val lastReadTimestamp: Long = 0L
+)
+
+typealias HistoryItem = ReadingHistory
+
+@Serializable
+data class Bookmark(
+    val book: String,
+    val chapter: Int,
+    val verseNumber: Int,
+    val createdAt: Long = 0L
 )
 
 @Serializable
-data class SavedStudyNote(
-    val id: String = generateUniqueId(),
-    val inputReference: String,
-    val blocks: List<ScripturePassageBlock>,
-    val timestamp: Long = 0L
+data class SavedNote(
+    val id: String = generateUniqueId("note"),
+    val book: String = "",
+    val chapter: Int = 0,
+    val verseRef: String = "",
+    val title: String = "",
+    val content: String = "",
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L,
+    val blocks: List<ScripturePassageBlock> = emptyList()
 )
 
-private fun generateUniqueId(): String {
-    return "note_${Random.nextLong(1000000000L, 9999999999L)}"
+typealias SavedStudyNote = SavedNote
+
+@Serializable
+data class SavedQuestion(
+    val id: String = generateUniqueId("q"),
+    val book: String = "",
+    val chapter: Int = 0,
+    val verseRef: String = "",
+    val questionText: String = "",
+    val answerNotes: String = "",
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L,
+    val isResolved: Boolean = false
+)
+
+fun generateUniqueId(prefix: String = "item"): String {
+    return "${prefix}_${Random.nextLong(1000000000L, 9999999999L)}"
 }

@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +22,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -57,18 +59,26 @@ fun ScriptureReader(
     book: Book,
     chapter: Int,
     targetScrollVerse: Int? = null,
-    onScrollComplete: () -> Unit = {}
+    onScrollComplete: () -> Unit = {},
+    onNextChapter: () -> Unit = {},
+    onPreviousChapter: () -> Unit = {},
+    onQuickAddNote: (String, Int) -> Unit = { _, _ -> },
+    onQuickAddQuestion: (String, Int) -> Unit = { _, _ -> }
 ) {
     var verses by remember { mutableStateOf<List<Verse>>(emptyList()) }
-    var highlights by remember { mutableStateOf<List<Highlight>>(emptyList()) }
+    var highlights by remember { mutableStateOf<List<VerseHighlight>>(emptyList()) }
+    var bookmarks by remember { mutableStateOf<List<Bookmark>>(emptyList()) }
     val selectedVerseNumbers = remember { mutableStateListOf<Int>() }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+
     LaunchedEffect(book, chapter) {
         verses = bibleService.getChapterVerses(book.longName, chapter)
         highlights = bibleService.getHighlights()
-        bibleService.addToHistory(HistoryItem(book.longName, chapter))
+        bookmarks = bibleService.getBookmarks()
+        bibleService.addToHistory(ReadingHistory(book.longName, chapter))
         selectedVerseNumbers.clear()
     }
 
@@ -82,7 +92,26 @@ fun ScriptureReader(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(book, chapter) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragOffset < -120f) {
+                            onNextChapter()
+                        } else if (dragOffset > 120f) {
+                            onPreviousChapter()
+                        }
+                        dragOffset = 0f
+                    },
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        dragOffset += dragAmount
+                    }
+                )
+            }
+    ) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
@@ -108,13 +137,23 @@ fun ScriptureReader(
 
             items(verses) { verse ->
                 val isSelected = selectedVerseNumbers.contains(verse.verseNum)
-                val highlight = highlights.find { it.bookName == verse.bookName && it.chapter == verse.chapter && it.verseNum == verse.verseNum }
+                val highlight = highlights.find { 
+                    it.book.equals(verse.bookName ?: book.longName, ignoreCase = true) && 
+                    it.chapter == verse.chapter && 
+                    it.verseNumber == verse.verseNum 
+                }
+                val isBookmarked = bookmarks.any { 
+                    it.book.equals(verse.bookName ?: book.longName, ignoreCase = true) && 
+                    it.chapter == verse.chapter && 
+                    it.verseNumber == verse.verseNum 
+                }
                 val highlightColor = highlight?.let { parseHexColor(it.colorHex) }
 
                 VerseRow(
                     verse = verse,
                     isSelected = isSelected,
                     highlightColor = highlightColor,
+                    isBookmarked = isBookmarked,
                     onToggleSelection = {
                         if (isSelected) selectedVerseNumbers.remove(verse.verseNum)
                         else selectedVerseNumbers.add(verse.verseNum)
@@ -143,14 +182,33 @@ fun ScriptureReader(
                             if (colorHex == null) {
                                 bibleService.removeHighlight(book.longName, chapter, num)
                             } else {
-                                bibleService.saveHighlight(Highlight(book.longName, chapter, num, colorHex))
+                                bibleService.saveHighlight(VerseHighlight(book.longName, chapter, num, colorHex))
                             }
                         }
                         highlights = bibleService.getHighlights()
                         selectedVerseNumbers.clear()
                     }
                 },
-                onAction = { _ ->
+                onBookmarkToggle = {
+                    scope.launch {
+                        selectedVerseNumbers.forEach { num ->
+                            val alreadyBookmarked = bibleService.isBookmarked(book.longName, chapter, num)
+                            if (alreadyBookmarked) {
+                                bibleService.removeBookmark(book.longName, chapter, num)
+                            } else {
+                                bibleService.addBookmark(Bookmark(book.longName, chapter, num))
+                            }
+                        }
+                        bookmarks = bibleService.getBookmarks()
+                        selectedVerseNumbers.clear()
+                    }
+                },
+                onAddNote = { rangeText ->
+                    onQuickAddNote(if (rangeText.isNotBlank()) rangeText else "${book.longName} $chapter", chapter)
+                    selectedVerseNumbers.clear()
+                },
+                onAddQuestion = { rangeText ->
+                    onQuickAddQuestion(if (rangeText.isNotBlank()) rangeText else "${book.longName} $chapter", chapter)
                     selectedVerseNumbers.clear()
                 }
             )
@@ -163,6 +221,7 @@ fun VerseRow(
     verse: Verse,
     isSelected: Boolean,
     highlightColor: Color?,
+    isBookmarked: Boolean,
     onToggleSelection: () -> Unit
 ) {
     val dottedEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
@@ -187,15 +246,25 @@ fun VerseRow(
                 }
             }
     ) {
-        Text(
-            text = verse.verseNum.toString(),
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 10.sp
-            ),
-            color = if (isSelected) Color(0xFFFFC107) else GoldText,
-            modifier = Modifier.padding(top = 4.dp, end = 8.dp)
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = verse.verseNum.toString(),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp
+                ),
+                color = if (isSelected) Color(0xFFFFC107) else GoldText,
+                modifier = Modifier.padding(top = 4.dp, end = 6.dp)
+            )
+            if (isBookmarked) {
+                Icon(
+                    imageVector = Icons.Default.Bookmark,
+                    contentDescription = "Bookmarked",
+                    tint = GoldAccent,
+                    modifier = Modifier.size(12.dp).padding(top = 2.dp)
+                )
+            }
+        }
         Text(
             text = buildAnnotatedVerseText(verse.text),
             style = MaterialTheme.typography.bodyLarge,
@@ -211,7 +280,9 @@ fun SelectionActionBar(
     chapter: Int,
     selectedVerses: List<Int>,
     onColorSelected: (String?) -> Unit,
-    onAction: (String) -> Unit
+    onBookmarkToggle: () -> Unit,
+    onAddNote: (String) -> Unit,
+    onAddQuestion: (String) -> Unit
 ) {
     val rangeText = remember(selectedVerses) {
         if (selectedVerses.isEmpty()) ""
@@ -264,14 +335,18 @@ fun SelectionActionBar(
                             .clickable { onColorSelected(null) },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Block, contentDescription = "Clear", modifier = Modifier.size(16.dp), tint = Color.Gray)
+                        Icon(Icons.Default.Block, contentDescription = "Clear Highlight", modifier = Modifier.size(16.dp), tint = Color.Gray)
                     }
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconButton(onClick = { onAction("Copy") }) { Icon(Icons.Default.ContentCopy, "Copy", tint = Color.LightGray) }
-                    IconButton(onClick = { onAction("Share") }) { Icon(Icons.Default.Share, "Share", tint = Color.LightGray) }
-                    IconButton(onClick = { onAction("Note") }) { Icon(Icons.AutoMirrored.Filled.NoteAdd, "Note", tint = Color.LightGray) }
+                    IconButton(onClick = onBookmarkToggle) { Icon(Icons.Default.Bookmark, "Bookmark", tint = GoldAccent) }
+                    IconButton(onClick = {
+                        onAddNote(if (rangeText.isNotBlank()) rangeText else "$bookName $chapter")
+                    }) { Icon(Icons.AutoMirrored.Filled.NoteAdd, "Add Note", tint = Color.LightGray) }
+                    IconButton(onClick = {
+                        onAddQuestion(if (rangeText.isNotBlank()) rangeText else "$bookName $chapter")
+                    }) { Icon(Icons.Default.QuestionAnswer, "Ask Question", tint = Color.LightGray) }
                 }
             }
         }
