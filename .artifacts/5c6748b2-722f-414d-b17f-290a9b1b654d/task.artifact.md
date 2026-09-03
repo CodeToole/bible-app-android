@@ -1,0 +1,12 @@
+- [x] Scaffold the CMP project structure (Gradle configuration and directory layout)
+- [/] Port C# models to Kotlin `@Serializable` data classes in `commonMain`
+    - [ ] Create `Book.kt`
+    - [ ] Create `Verse.kt`
+    - [ ] Create `Note.kt`
+    - [ ] Create `Bookmark.kt`
+    - [ ] Create `Highlight.kt`
+    - [ ] Create `HistoryItem.kt`
+- [ ] Port `NoteParserService.cs` logic and regex to Kotlin
+- [ ] Implement data loading logic in Kotlin to parse and query `kjv.json`
+- [ ] Build shared Compose UI components (Reader, Notes, Search)
+- [ ] Verify Android build and fix any Gradle or Kotlin errors
